@@ -1,5 +1,6 @@
 Download brainpan from [vulnhub](https://www.vulnhub.com/entry/brainpan-1,51/) and provision it as a VM.
 
+
 ## Scanning
 
 Let’s try to find the IP of this machine using nmap. 
@@ -42,18 +43,26 @@ Looking for low hanging fruits at robots.txt. Unfortunately there isn't one here
 Since it is an .exe file, I need to evaluate the file in my Windows 7 lab machine. But first lets confirm its file type. *Spoiler: It is a windows executable file.*
 
 `file Downloads/brainpan.exe`
+
 ![888c3ff6f19a66eb2b356770412bc5ad.png](/_resources/4ce3497d273f4680a431b054427a23ab.png)
 
 Using string command to extract strings of printable characters from this file. We can see a rather interesting set of characters. *Spoiler: It is the password for authenticating ...*
 
 `strings Downloads/brainpan.exe` 
+
 ![1032d53b3c183822323b7d017e67945c.png](/_resources/c57c388a02cb4bc9b2f450418b2eaa79.png)
+
+Dropping brainpan.exe to the Windows 7 lab machine. Below we can see that brainpan.exe is running and waiting for connection on port 9999. It is the same file running on target machine, which can be confirmed by connecting to target machine (brainpan).
 
 ![c5fb599587e7d4c1d6cc5adf3a3d9806.png](/_resources/935a5f2062684f8a92640efb4ec856ff.png)
 
+Connecting to Windows 7 machine, running brainpan.exe.
 `nc -nv 192.168.69.101 9999`
+
 ![a5bccb2981932f2a47246bb458efc670.png](/_resources/170cd19b33a24a64bf9a5742d6533ac4.png)
+
 ![219febe29ab591a55eeba5ff12f828dc.png](/_resources/9b34d434766b4f22b3185f8d83cbb1b7.png)
+
 ![2a1f38a35c15d6733129f154951edd8b.png](/_resources/935db545c12d4b98b809d268d3ffbe84.png)
 
 ![00fd1b9a9a6c6458f76750f251c3cdbd.png](/_resources/f8de05508bf94098bb85d62404993f00.png)
@@ -61,7 +70,7 @@ Using string command to extract strings of printable characters from this file. 
 ![c40ebc3b35c9978e4df95f916a2474ca.png](/_resources/2238882e0d404b428b81b2211a3d9fed.png)
 
 
-## Debugging
+## Debugging (that Buffer Overflow part)
 
 1. fuzzing
 ```
