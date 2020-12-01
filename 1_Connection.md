@@ -25,5 +25,6 @@ except:
 	sys.exit()
 ```
 
-OR use net-cat
-`nc -nv 192.168.69.1 6969`
+OR use net-cat (recommended)
+Command: `nc -nv $RHOST $RPORT`
+Example: `nc -nv 192.168.69.5 6969`

