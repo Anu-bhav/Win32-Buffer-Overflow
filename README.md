@@ -58,6 +58,8 @@ The x86 architecture does contain 8 general registers that are used to store dat
 **Generate a list of bad characters in python:**
 `'\\'.join([ "x{:02x}".format(i) for i in range(1,256) ])`
 
+* * *
+
 # tl;dr
 
 **Steps:**
