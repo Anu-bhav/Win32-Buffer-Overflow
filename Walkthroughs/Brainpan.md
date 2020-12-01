@@ -1,9 +1,16 @@
+Download brainpan from [vulnhub](https://www.vulnhub.com/entry/brainpan-1,51/) and provision it as a VM.
+
 ## Scanning
 
+Let’s try to find the IP of this machine using nmap. 
 `nmap  -sn  192.168.69.100/24` 
+Below, we can see that the IP address is discovered to be 192.168.69.104.
+
 ![4968c3349c6dcf24a34492aee42e58b6.png](/_resources/3c106cdeb28b4fa9a5eeae7ad1812a1e.png)
 
+Let’s perform an nmap scan on this. Below are the results of the nmap scan, where port 9999 and http running on 10000 were detected.
 `nmap -T4 -p- -A 192.168.69.104` 
+
 ![b0d695ca1a44d3cc7684c80e0d372ccb.png](/_resources/1b5e8edd1dda45bab01654d047dc24cf.png)
 
 
