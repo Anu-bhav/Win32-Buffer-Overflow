@@ -25,7 +25,7 @@ Port 10000 is serving an https server. Opening it in browser gives us the follow
 
 ![754f09cefc635037a1d869aeefd66d64.png](/_resources/29639ff557cc4f18be68de3b148b43d6.png)
 
-Looking for low hanging fruits at robots.txt. Unfortunately we didnt find anything in here but its a good practise to always look at robots.txt as in the simplest cases, it (robots.txt) will reveal restricted paths and the technology used by servers/web-apps.
+Looking for low hanging fruits at robots.txt. Unfortunately there isn't one here but its a good practise to always look at robots.txt as in the simplest cases, it (robots.txt) will reveal restricted paths and the technology used by servers/web-apps.
 
 ![e42f43d689380dbea40187baf2b5fad1.png](/_resources/e8381a398e0d4bd78bce65853585e3bb.png)
 
@@ -39,10 +39,12 @@ Looking for low hanging fruits at robots.txt. Unfortunately we didnt find anythi
 
 ![2395216d2d9b89b471d5af43434c968d.png](/_resources/0906b9809a194cf5850afeb66fcb9886.png)
 
-Since it is an .exe file, I need to evaluate the file in my Windows 7 lab machine. But first lets confirm its file type. * Spoiler alert: It is a windows executable file. *
+Since it is an .exe file, I need to evaluate the file in my Windows 7 lab machine. But first lets confirm its file type. *Spoiler: It is a windows executable file.*
 
 `file Downloads/brainpan.exe`
 ![888c3ff6f19a66eb2b356770412bc5ad.png](/_resources/4ce3497d273f4680a431b054427a23ab.png)
+
+Using string command to extract strings of printable characters from this file. We can see a rather interesting set of characters. *Spoiler: It is the password for authenticating ...*
 
 `strings Downloads/brainpan.exe` 
 ![1032d53b3c183822323b7d017e67945c.png](/_resources/c57c388a02cb4bc9b2f450418b2eaa79.png)
