@@ -1,7 +1,7 @@
 ## Scanning
 
 `nmap  -sn  192.168.69.100/24`
-![4968c3349c6dcf24a34492aee42e58b6.png](../../../_resources/3c106cdeb28b4fa9a5eeae7ad1812a1e.png)
+![4968c3349c6dcf24a34492aee42e58b6.png](/_resources/3c106cdeb28b4fa9a5eeae7ad1812a1e.png)
 
 `nmap -T4 -p- -A 192.168.69.104`
 ![b0d695ca1a44d3cc7684c80e0d372ccb.png](../../../_resources/1b5e8edd1dda45bab01654d047dc24cf.png)
