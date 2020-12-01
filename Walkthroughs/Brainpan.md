@@ -10,7 +10,7 @@ Below, we can see that the IP address is discovered to be 192.168.69.104.
 
 ![4968c3349c6dcf24a34492aee42e58b6.png](/_resources/3c106cdeb28b4fa9a5eeae7ad1812a1e.png)
 
-Let’s perform an nmap scan on this. 
+Let’s perform an nmap scan on this machine. 
 
 `nmap -T4 -p- -A 192.168.69.104` 
 
@@ -21,22 +21,31 @@ Below are the results of the nmap scan, where port 9999 and http running on 1000
 
 ## Enumeration
 
+Port 10000 is serving an https server. Opening it in browser gives us the following unintersting page.
+
 ![754f09cefc635037a1d869aeefd66d64.png](/_resources/29639ff557cc4f18be68de3b148b43d6.png)
+
+Looking for low hanging fruits at robots.txt. Unfortunately we didnt find anything in here but its a good practise to always look at robots.txt as in the simplest cases, it (robots.txt) will reveal restricted paths and the technology used by servers/web-apps.
 
 ![e42f43d689380dbea40187baf2b5fad1.png](/_resources/e8381a398e0d4bd78bce65853585e3bb.png)
 
+ I started directory busting using dir. 
+
 `dirb http://192.168.69.104:10000 /usr/share/wordlists/dirb/common.txt` 
+
 ![58ca4947419b2f61cb7e15c9665fbfbd.png](/_resources/2c0308b8e5c04e808f6d579e71b9d877.png)
+
+... and found a bin directory in which we can see that an .exe named brainpan is present.
 
 ![2395216d2d9b89b471d5af43434c968d.png](/_resources/0906b9809a194cf5850afeb66fcb9886.png)
 
-![f4ea7b3da535ffe9f4c0335e7572632a.png](/_resources/7085c3caf1c84f94a205f815ec72d047.png)
-
-`strings Downloads/brainpan.exe` 
-![1032d53b3c183822323b7d017e67945c.png](/_resources/c57c388a02cb4bc9b2f450418b2eaa79.png)
+Since it is an .exe file, I need to evaluate the file in my Windows 7 lab machine. But first lets confirm its file type. * Spoiler alert: It is a windows executable file. *
 
 `file Downloads/brainpan.exe`
 ![888c3ff6f19a66eb2b356770412bc5ad.png](/_resources/4ce3497d273f4680a431b054427a23ab.png)
+
+`strings Downloads/brainpan.exe` 
+![1032d53b3c183822323b7d017e67945c.png](/_resources/c57c388a02cb4bc9b2f450418b2eaa79.png)
 
 ![c5fb599587e7d4c1d6cc5adf3a3d9806.png](/_resources/935a5f2062684f8a92640efb4ec856ff.png)
 
