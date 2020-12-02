@@ -5,7 +5,7 @@
 
 ## First some basics!
 
-**Some basic understanding of buffer overflow is explained [here](https://www.youtube.com/watch?v=1S0aBV-Waeo).*
+**Some basic understanding of buffer overflow can be found [here](https://www.youtube.com/watch?v=1S0aBV-Waeo).**
 
 The x86 architecture does contain 8 general registers that are used to store data and then can address that point to other positions in the memory.
 
