@@ -3,9 +3,9 @@
 
 ## Contents
 
-[Introduction](README.md#Introduction)
+[Introduction](#Introduction)
 
-[tl;dr](README.md#tl;dr)
+[TL;DR](README.md#TLDR)
 
 [Global Steps](README.md#Global-Steps)
 
@@ -40,7 +40,7 @@ This should give a good idea about "what" and "why" of **JMP-ESP** [here](https:
 * * *
 
 
-# tl;dr
+# TLDR
 
 **Steps:**
 - [ ] Find offset
