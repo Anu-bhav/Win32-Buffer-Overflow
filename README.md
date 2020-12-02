@@ -1,6 +1,16 @@
 # Win32-Buffer-Overflow
  Notes and scripts for a basic windows 32-bit buffer overflow exploit development. Aimed for OSCP preparation.
 
+## Contents
+
+[Introduction](README.md#Introduction)
+
+[tl;dr](README.md#tl;dr)
+
+[Global Steps](README.md#Global Steps)
+
+[Methodology](README.md#Methodology)
+
 # Introduction
 
 ## First some basics!
