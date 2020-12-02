@@ -7,7 +7,7 @@
 
 [tl;dr](README.md#tl;dr)
 
-[Global Steps](README.md#Global Steps)
+[Global Steps](README.md#Global-Steps)
 
 [Methodology](README.md#Methodology)
 
@@ -51,7 +51,7 @@ This should give a good idea about "what" and "why" of **JMP-ESP** [here](https:
 - [ ] Ensure buffer length for shellcode is good enough
 - [ ] Get a shell
 
-# Global Steps
+# Global-Steps
 
 *Note: These steps are a reminder of the global Windows buffer overflow and are not intended to be a manual :)*
 
