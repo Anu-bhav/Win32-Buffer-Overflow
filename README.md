@@ -5,7 +5,7 @@
 
 [Introduction](#Introduction)
 
-[TL;DR](#TLDR)
+[TL;DR]('#TLDR')
 
 [Global Steps](#Global-Steps)
 
