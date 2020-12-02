@@ -4,6 +4,9 @@
 # Introduction
 
 ## First some basics!
+
+**Some basic understanding of buffer overflow is explained [here](https://www.youtube.com/watch?v=1S0aBV-Waeo).*
+
 The x86 architecture does contain 8 general registers that are used to store data and then can address that point to other positions in the memory.
 
 * EBP (base pointer)
@@ -16,49 +19,16 @@ The x86 architecture does contain 8 general registers that are used to store dat
 * ESI (source index)
 
 **EIP**: Extended Instruction Pointer. This is a read-only register and does contain the address of the next instruction to be executed (tells the CPU what to do next).
+
 **ESP**: Extended Stack Pointer. Points to the top of the stack (at any time) at the lower memory location.
+
 **EBP**: Extended Base Stack Pointer. Points to higher address (last item) at the bottom of the stack.
+
+**JMP**: In the x86 assembly language, the JMP instruction performs an unconditional jump. Such an instruction transfers the flow of execution by changing the instruction pointer register. 
+
+This should give a good idea about "what" and "why" of **JMP-ESP** [here](https://security.stackexchange.com/questions/157478/why-jmp-esp-instead-of-directly-jumping-into-the-stack). The OPCODE for JMP ESP is \xff\xe4 (in assembly). 
 * * *
 
-
-## Bad Characters
-* Common bad chars
-
-1. 0x00     NULL (\0)
-2. 0x09     Tab (\t)
-3. 0x0a     Line Feed (\n)
-4. 0x0d     Carriage Return (\r)
-5. 0xff     Form Feed (\f)
-
-
-* Input for testing bad chars
-
-1. "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
-2. "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e"
-3. "\x1f\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d"
-4. "\x2e\x2f\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x3a\x3b\x3c"
-5. "\x3d\x3e\x3f\x40\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b"
-6. "\x4c\x4d\x4e\x4f\x50\x51\x52\x53\x54\x55\x56\x57\x58\x59\x5a"
-7. "\x5b\x5c\x5d\x5e\x5f\x60\x61\x62\x63\x64\x65\x66\x67\x68\x69"
-8. "\x6a\x6b\x6c\x6d\x6e\x6f\x70\x71\x72\x73\x74\x75\x76\x77\x78"
-9. "\x79\x7a\x7b\x7c\x7d\x7e\x7f\x80\x81\x82\x83\x84\x85\x86\x87"
-10. "\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96"
-11. "\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5"
-12. "\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4"
-13. "\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3"
-14. "\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2"
-15. "\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1"
-16. "\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0"
-17. "\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff"
-* * *
-
-**Generate a list of bad characters in bash:**
-`for i in {1..255}; do printf "\\\x%02x" $i; done; echo -e "\r"`
-
-**Generate a list of bad characters in python:**
-`'\\'.join([ "x{:02x}".format(i) for i in range(1,256) ])`
-
-* * *
 
 # tl;dr
 
@@ -127,3 +97,24 @@ Add to PoC (the memory address is the one we found in step 10, noted Little Endi
 *Increase NOP slide if needed*
 
 * * *
+
+# Methodology
+
+[1. Connection](1_Connection.md)
+
+[2. Fuzzing](2_Fuzzing.md)
+
+[3. Getting Offset](3_Getting-Offset.md)
+
+[4. Controlling EIP](4_Controlling-EIP.md)
+
+[5. Badcharacters](5_Badchars.md)
+
+[6. Finding JMP Pointer](6_Finding-JMP-Pointer.md)
+
+[7. JMP ESP](7_JMP-ESP.md)
+
+[8. Obtaining a Shell](8_Shell.md)
+
+* * *
+
