@@ -5,11 +5,15 @@
 
 [Introduction](#Introduction)
 
-[TL;DR](README.md#TLDR)
+[TL;DR](#TLDR)
 
-[Global Steps](README.md#Global-Steps)
+[Global Steps](#Global-Steps)
 
-[Methodology](README.md#Methodology)
+[Methodology](#Methodology)
+
+[Template Scripts](/Scripts)
+
+[Walkthroughs](/Walkthroughs)
 
 # Introduction
 
